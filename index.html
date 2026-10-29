@@ -229,7 +229,7 @@ async function onSignedIn(user){
 function bn(){
  const e=$('#bn');if(!e)return;
  if(!currentUser){return;}
- e.innerHTML=`<div class="note">● متصل بحساب ${E(currentUser.email||'')} — المزامنة تلقائية تقريبًا كل 5 ثوانٍ <button class="lk" onclick="logout()">تسجيل الخروج</button></div>`;
+ e.innerHTML=`<div class="note">● متصل بحساب ${E(currentUser.email||'')} — المزامنة تلقائية تقريبًا كل 5 ثوانٍ <button class="lk" onclick="logout()">تسجيل الخروج</button></div>`<button class="lk" onclick="logout()">تسجيل الخروج</button>;
 }
 function refresh(){const a=document.activeElement;const typing=a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)&&$('#main').contains(a);
  if(typing){if($('#rows'))drawRows(tab);$('#cnt').textContent=db.animals.filter(isLive).length+' رأس';return}
