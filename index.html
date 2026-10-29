@@ -57,6 +57,34 @@ body.locked .app header{display:none}
 .auth-card label{margin-top:10px}
 .auth-card input{margin-top:4px}
 #bn{margin-top:14px}
+.account-note{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0}
+.account-note .btn{flex-shrink:0}
+.logout-card .row{margin-top:12px}
+.logout-card .btn{min-width:150px}
+.wrap{max-width:100%;min-width:0}
+table{min-width:max-content}
+@media (max-width:600px){
+ .app{padding:12px}
+ header{align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:10px}
+ h1,#cnt{font-size:1.45rem}
+ nav{gap:0;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+ nav button{padding:8px 12px;scroll-snap-align:start}
+ .card{padding:12px;border-radius:10px}
+ .grid{grid-template-columns:minmax(0,1fr);gap:12px}
+ label{min-width:0;font-size:.92rem}
+ input,select,textarea{min-height:44px}
+ .bar{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+ .bar select{width:100%;min-width:0}
+ .row{gap:8px}
+ .row .btn{max-width:100%}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .stat{padding:10px;min-width:0}
+ .stat b{font-size:1.35rem}
+ .account-note{align-items:stretch}
+ .account-note .btn{align-self:flex-start}
+ .wrap{overflow-x:auto;overscroll-behavior-x:contain}
+ table{font-size:.88rem}
+}
 </style>
 </head>
 <body>
@@ -180,8 +208,9 @@ async function login(){
 }
 async function signup(){
  const password=$('#authPassword').value;
- if(password.length<6){showAuth('اختر كلمة مرور من 6 أحرف على الأقل.');return;}
  const number=$('#authNumber').value.trim();
+ if(!/^\d{6}$/.test(number)){showAuth('اختر رقم مستخدم من 6 أرقام.');return;}
+ if(password.length<6){showAuth('اختر كلمة مرور من 6 أحرف على الأقل.');return;}
  const {data,error}=await sb.auth.signUp({email:authEmailFromNumber(number),password});
  if(error){showAuth('تعذر إنشاء الحساب: '+error.message+' — جرّب مرة ثانية.');return;}
  if(!data.session){showAuth('رقم المستخدم المقترح: '+number+'. يلزم تعطيل تأكيد البريد الإلكتروني في إعدادات Supabase (Authentication > Providers > Email) لأن الدخول هنا برقم مستخدم، ثم إنشاء الحساب مرة ثانية.');return;}
@@ -226,17 +255,14 @@ async function onSignedIn(user){
   bn();
  }catch(e){console.error(e);showAuth('تعذر الاتصال بقاعدة البيانات. تأكد من رابط المشروع والمفتاح وأن الجداول جاهزة.');}
 }
-function bn(){
- const e=$('#bn');if(!e)return;
- if(!currentUser){return;}
- e.innerHTML=`<div class="note">● متصل بحساب ${E(currentUser.email||'')} — المزامنة تلقائية تقريبًا كل 5 ثوانٍ <button class="lk" onclick="logout()">تسجيل الخروج</button></div>`<button class="lk" onclick="logout()">تسجيل الخروج</button>;
-}
 function refresh(){const a=document.activeElement;const typing=a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)&&$('#main').contains(a);
  if(typing){if($('#rows'))drawRows(tab);$('#cnt').textContent=db.animals.filter(isLive).length+' رأس';return}
  render()}
-function bn(){const e=$('#bn');if(!e)return;
- const mig=rdb&&legacy&&CS.every(c=>ready[c]&&!db[c].length);
- e.innerHTML=!inited?'':!rdb?'<div class="note">البيانات محلية على هذا الجهاز فقط. افتح الرابط وأنت مسجل دخول بحساب Claude عشان تتزامن مع باقي الأجهزة.</div>':(mig?`<div class="card"><b>لقينا بيانات مسجلة على هذا الجهاز (${legacy.animals.length} راس).</b><div class="row"><button class="btn" onclick="migrate()">انقلها للقاعدة المشتركة</button></div></div>`:'<div class="note">● متزامن مباشرة بين الأجهزة</div>')}
+function bn(){
+ const e=$('#bn');if(!e)return;
+ if(!currentUser){e.innerHTML='';return;}
+ e.innerHTML=`<div class="note account-note"><span>● متصل بحساب ${E(currentUser.email||'')} — المزامنة تلقائية بين الأجهزة.</span><button class="btn alt" onclick="logout()">تسجيل الخروج</button></div>`;
+}
 async function migrate(){const L=legacy;legacy=null;toast('جاري النقل...');
  try{for(const c of CS){for(let i=0;i<L[c].length;i+=25){await Promise.all(L[c].slice(i,i+25).map(x=>rdb.collection(c).doc(x.id).set(x)))}}toast('تم نقل البيانات')}catch(e){legacy=L;werr(e)}}
 function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2600)}
@@ -317,9 +343,7 @@ function sumView(){
  <div class="card"><h2>ولادات متوقعة خلال 30 يوم</h2><ul class="l">${soon.length?soon.map(b=>`<li><span>النعجة ${E(b.ewe)} (${b.e}) <span class="tag${diff(b.e)<0?' late':''}">${dayL(diff(b.e))}</span></span><button class="lk" onclick="go('births');ed('births','${b.id}')">سجّل الولادة</button></li>`).join(''):'<li class="note">لا توجد ولادات قريبة. الموعد المتوقع = تاريخ التلقيح + 150 يوم.</li>'}</ul></div>
  <div class="card"><h2>ممنوعة من البيع والذبح (${held.length})</h2><ul class="l">${held.length?held.slice(0,40).map(a=>`<li><span>رقم ${E(a.tag)}</span><span class="tag late">حتى ${holds(a)[0].e}</span></li>`).join('')+(held.length>40?`<li class="note">وغيرها ${held.length-40}، شوفها في تبويب القطيع.</li>`:''):'<li class="note">ما في حيوانات تحت منع.</li>'}</ul></div>
  <div class="card"><h2>الحسابات</h2><div class="note">دخل ${fmt(inc)} د.ك، مصروف ${fmt(exp)} د.ك</div></div>
- <div class="card"><h2>نسخة احتياطية</h2><p class="note">البيانات محفوظة في هذا المتصفح وعلى هذا الجهاز فقط. انسخ النسخة واحفظها في مكان آمن (ملاحظات أو رسالة لنفسك)، ولصقها هنا ترجع البيانات. الاستيراد يستبدل البيانات الحالية.</p><textarea id="bk" aria-label="النسخة الاحتياطية"></textarea><div class="row"><button class="btn" onclick="exp_()">عرض النسخة للنسخ</button><button class="btn alt" onclick="imp()">استيراد من النص</button></div></div>`}
-function exp_(){const t=$('#bk');t.value=JSON.stringify(db);t.focus();t.select();toast('انسخ النص كامل واحفظه')}
-function imp(){try{const o=JSON.parse($('#bk').value);if(!o||!Array.isArray(o.animals))throw 0;db={animals:o.animals||[],health:o.health||[],births:o.births||[],money:o.money||[]};save();render();toast('تم الاستيراد')}catch(e){toast('النص غير صالح')}}
+ <div class="card logout-card"><h2>الحساب</h2><p class="note">عند الانتهاء من استخدام سجل القطيع، اضغط لتسجيل الخروج من هذا الجهاز.</p><div class="row"><button class="btn" onclick="logout()">تسجيل الخروج</button></div></div>`}
 function render(){bn();
  $('#tabs').innerHTML=TABS.map(([k,l])=>`<button class="${k==tab?'on':''}" onclick="go('${k}')">${l}</button>`).join('');
  $('#tags').innerHTML=db.animals.map(a=>`<option value="${E(a.tag)}">`).join('');
