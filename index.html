@@ -181,7 +181,7 @@ async function login(){
 async function signup(){
  const password=$('#authPassword').value;
  if(password.length<6){showAuth('اختر كلمة مرور من 6 أحرف على الأقل.');return;}
- const number=String(Math.floor(100000+Math.random()*900000));
+ const number=$('#authNumber').value.trim();
  const {data,error}=await sb.auth.signUp({email:authEmailFromNumber(number),password});
  if(error){showAuth('تعذر إنشاء الحساب: '+error.message+' — جرّب مرة ثانية.');return;}
  if(!data.session){showAuth('رقم المستخدم المقترح: '+number+'. يلزم تعطيل تأكيد البريد الإلكتروني في إعدادات Supabase (Authentication > Providers > Email) لأن الدخول هنا برقم مستخدم، ثم إنشاء الحساب مرة ثانية.');return;}
